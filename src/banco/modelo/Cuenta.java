@@ -3,6 +3,7 @@ package banco.modelo;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class Cuenta {
 
@@ -60,35 +61,32 @@ public class Cuenta {
         this.transaccion = transaccion;
     }
 
-    public void depositar(double monto){
+    public Optional<Transaccion> depositar(double monto){
        if (monto <= 0){
-           System.out.println("El monto debe ser mayor a 0.");
-           return;
-       }
-       double nuevoSaldo = getSaldo() + monto;
-       setSaldo(nuevoSaldo);
+           return Optional.empty();
+       }else {
+           double nuevoSaldo = getSaldo() + monto;
+           setSaldo(nuevoSaldo);
 
-        registrarTransaccion("Deposito", monto, "Deposito en cajero.");
-        System.out.println("Retiro realizado con exito");
+           Transaccion transaccionRegistrada = registrarTransaccion("Deposito", monto, "Deposito en cajero.");
+
+           return Optional.of(transaccionRegistrada);
+       }
     }
 
-    public void retirar(double monto){
-        if (monto <= 0){
-            System.out.println("El monto debe ser mayor a 0.");
-            return;
-        }
-        if (monto > getSaldo()){
-            System.out.println("No puede retirar esta cantidad de dinero, su saldo actual es: S/." + getSaldo());
+    public Optional<Transaccion> retirar(double monto){
+        if (monto <= 0 || monto > getSaldo()){
+            return Optional.empty();
         }else {
             double nuevoSaldo = getSaldo() - monto;
             setSaldo(nuevoSaldo);
 
-            registrarTransaccion("Retiro", monto, "Retiro en cajero.");
-            System.out.println("Retiro realizado con exito");
+            Transaccion transaccionRegistrada = registrarTransaccion("Retiro", monto, "Retiro en cajero.");
+            return Optional.of(transaccionRegistrada);
         }
     }
 
-    public void registrarTransaccion(String tipoTransaccion, double monto, String descripcion){
+    public Transaccion registrarTransaccion(String tipoTransaccion, double monto, String descripcion){
         if(this.transaccion == null){
             this.transaccion = new ArrayList<>();
         }
@@ -98,60 +96,54 @@ public class Cuenta {
 
         Transaccion t = new Transaccion(id, tipoTransaccion, monto, descripcion, ahora);
         this.transaccion.add(t);
+        return t;
     }
 
-    public void transferir(double monto, Cuenta destino){
-        if(monto <= 0){
-            System.out.println("El monto debe ser mayor que 0.");
-            return;
-        }
-
-        if(destino == null){
-            System.out.println("La cuenta destino no existe.");
-            return;
-        }
-
-        if (monto > this.saldo){
-            System.out.println("Saldo insuficiente para realizar la transferencia.");
-            return;
+    public Optional<TransferenciaResultado> transferir(double monto, Cuenta destino){
+        if(monto <= 0 || destino == null || monto > this.saldo){
+            return Optional.empty();
         }
 
         // Retiramos el monto de la cuenta actual (origen)
         this.saldo -= monto;
-        this.registrarTransaccion("Transferencia enviada", monto,
+        Transaccion t1 =  this.registrarTransaccion("Transferencia enviada", monto,
                 "Transferencia a cuenta N° " + destino.getNroCuenta());
 
         //Depositamos el monto en la cuenta destino
         destino.saldo += monto;
-        destino.registrarTransaccion("Transferencia recibida", monto,
+        Transaccion t2 = destino.registrarTransaccion("Transferencia recibida", monto,
                 "Transferencia desde cuenta N° " + this.getNroCuenta());
 
-        //Mensajes de confirmacion
-        System.out.println("Transferencia realizada con éxito.");
-        System.out.println("Monto transferido: S/." + monto);
-        System.out.println("Cuenta destino: " + destino.getNroCuenta());
-        System.out.println("Saldo actual: S/." + this.saldo);
+        TransferenciaResultado resultado = new TransferenciaResultado(t1, t2);
+
+        return Optional.of(resultado);
     }
 
-    public void mostrarHistorial() {
+    public List<Transaccion> historial() {
         if (this.transaccion == null || this.transaccion.isEmpty()) {
-            System.out.println("No hay transacciones registradas en esta cuenta.");
-            return;
-        }
-
-        System.out.println("=== Historial de la cuenta " + this.nroCuenta + " ===");
-        for (Transaccion t : this.transaccion) {
-            System.out.println(t);
+            return List.of();
+        }else {
+            return List.copyOf(transaccion);
         }
     }
 
     @Override
     public String toString() {
-        return "Cuenta{" +
-                "NroCuenta: " + nroCuenta +
-                " | Titular: " + (cliente != null ? cliente.getNombre() : "Sin titular") +
-                " | Saldo = S/." + saldo +
-                " | TipoCuenta: '" + tipoCuenta + '\'' +
-                '}';
+        return """
+        Cuenta {
+            Número de cuenta: %d
+            Titular: %s
+            Saldo: S/. %.2f
+            Tipo de cuenta: %s
+            Transacciones registradas: %d
+        }
+        """.formatted(
+                nroCuenta,
+                cliente != null ? cliente.getNombre() : "Sin titular",
+                saldo,
+                tipoCuenta,
+                transaccion != null ? transaccion.size() : 0
+        );
     }
+
 }

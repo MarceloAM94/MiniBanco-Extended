@@ -43,12 +43,19 @@ public class Cliente {
 
     @Override
     public String toString() {
-        return "Cliente{" +
-                "DNI: '" + dni + '\'' +
-                " | Nombre: '" + nombre + '\'' +
-                " | Cantidad de cuentas: " + (cuentas != null ? cuentas.size() : 0) +
-                '}';
+        return """
+        Cliente {
+            DNI: %s
+            Nombre: %s
+            Cantidad de cuentas: %d
+        }
+        """.formatted(
+                dni,
+                nombre,
+                (cuentas != null ? cuentas.size() : 0)
+        );
     }
+
 
     public void mostrarCuentas(){
         for (Cuenta c : cuentas){
@@ -60,4 +67,5 @@ public class Cliente {
         //no se
         return null;
     }
+
 }

@@ -40,9 +40,21 @@ public class Transaccion {
 
     @Override
     public String toString() {
-        return "Transaccion{" +
-                "Id: " + id + " | Transaccion: " + tipoTransaccion + " | Monto: " + monto +
-                " | Descripcion: " + descripcion + " | Fecha: " + fecha +
-                '}';
+        return """
+        Transacción {
+            ID: %d
+            Tipo: %s
+            Monto: S/. %.2f
+            Descripción: %s
+            Fecha: %s
+        }
+        """.formatted(
+                id,
+                tipoTransaccion,
+                monto,
+                descripcion,
+                fecha
+        );
     }
+
 }
